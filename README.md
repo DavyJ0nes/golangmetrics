@@ -7,7 +7,37 @@ This library contains helpers for easily instrumenting your code.
 Currently it only supports [Prometheus](http://prometheus.io)
 
 It exposes a simple wrapper around the the [promhttp.Handler](https://godoc.org/github.com/prometheus/client_golang/prometheus/promhttp#Handler)
-as well as a selection of base metrics that follow the [RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
+as well as a selection of core metrics that follow the [RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
+
+## Usage
+
+### Core Metrics
+
+To instrument an http handler with the core metrics you can do the following:
+
+```go
+package vertical
+
+type Handler struct {}
+
+var	metrics = golangmetrics.NewDefaultMetrics("valuecfg")
+
+func (h *Handler) Index(w http.ResponseWriter, r *http.Request) http.HandleFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("index"))
+	      metrics.RequestRate.WithLabelValues("index").Inc()
+	      defer timer.ObserveDuration()
+
+        someData, err := h.Worker.GoGetSomething()
+	      if err != nil {
+	          metrics.ErrorRate.WithLabelValues("index").Inc()
+	          return errorHandler(w, r)
+	      }
+
+        w.Write(someData)
+    }
+}
+```
 
 ## Metric Types
 
