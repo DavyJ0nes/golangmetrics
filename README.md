@@ -18,21 +18,37 @@ To instrument an http handler with the core metrics you can do the following:
 ```go
 package vertical
 
-type Handler struct {}
+import (
+	"net/http"
 
-var	metrics = golangmetrics.NewDefaultMetrics("valuecfg")
+	"github.com/davyj0nes/golangmetrics"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/someCompany/some"
+)
+
+type Handler struct {
+	Metrics golangmetrics.CoreMetrics
+	Worker 	some.Worker
+}
+
+func NewHandler() *Handler {
+	return &Handler{
+		Metrics: golangmetrics.NewDefaultMetrics("vertical")
+		Worker:  some.InitWorker()
+	}
+}
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) http.HandleFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("index"))
-	      metrics.RequestRate.WithLabelValues("index").Inc()
-	      defer timer.ObserveDuration()
+        timer := prometheus.NewTimer(h.Metrics.RequestDuration.WithLabelValues("index"))
+	    h.Metrics.RequestRate.WithLabelValues("index").Inc()
+	    defer timer.ObserveDuration()
 
         someData, err := h.Worker.GoGetSomething()
-	      if err != nil {
-	          metrics.ErrorRate.WithLabelValues("index").Inc()
-	          return errorHandler(w, r)
-	      }
+	    if err != nil {
+	        h.Metrics.ErrorRate.WithLabelValues("index").Inc()
+	      	return errorHandler(w, r)
+	    }
 
         w.Write(someData)
     }
