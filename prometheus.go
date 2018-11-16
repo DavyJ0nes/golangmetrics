@@ -15,23 +15,20 @@ type CoreMetrics struct {
 }
 
 // NewCoreMetrics returns an initialised set of base metrics
-func NewCoreMetrics(appName, handlerName string) CoreMetrics {
+func NewCoreMetrics(handlerName string) CoreMetrics {
 	requestRate := NewGauge(
-		appName,
 		fmt.Sprintf("%s_request_rate", handlerName),
 		"The rate of requests per second",
 		[]string{"method"},
 	)
 
 	requestDuration := NewHistogram(
-		appName,
 		fmt.Sprintf("%s_handler_duration_seconds", handlerName),
 		"The request duration in seconds",
 		[]string{"method"},
 	)
 
 	errorRate := NewGauge(
-		appName,
 		fmt.Sprintf("%s_request_error_rate", handlerName),
 		"The rate of errors per second",
 		[]string{"method"},
@@ -52,37 +49,33 @@ func NewMetricsHandler() http.Handler {
 }
 
 // NewCounter wraps prometheus.NewCounterVec
-func NewCounter(namespace, name, help string, labels []string) *prometheus.CounterVec {
+func NewCounter(name, help string, labels []string) *prometheus.CounterVec {
 	return prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: namespace,
-		Name:      name,
-		Help:      help,
+		Name: name,
+		Help: help,
 	}, labels)
 }
 
 // NewGauge wraps prometheus.NewGaugeVec
-func NewGauge(namespace, name, help string, labels []string) *prometheus.GaugeVec {
+func NewGauge(name, help string, labels []string) *prometheus.GaugeVec {
 	return prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      name,
-		Help:      help,
+		Name: name,
+		Help: help,
 	}, labels)
 }
 
 // NewHistogram wraps prometheus.NewHistogramVec
-func NewHistogram(namespace, name, help string, labels []string) *prometheus.HistogramVec {
+func NewHistogram(name, help string, labels []string) *prometheus.HistogramVec {
 	return prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: namespace,
-		Name:      name,
-		Help:      help,
+		Name: name,
+		Help: help,
 	}, labels)
 }
 
 // NewSummary wraps prometheus.NewSummaryVec
-func NewSummary(namespace, name, help string, labels []string) *prometheus.SummaryVec {
+func NewSummary(name, help string, labels []string) *prometheus.SummaryVec {
 	return prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace: namespace,
-		Name:      name,
-		Help:      help,
+		Name: name,
+		Help: help,
 	}, labels)
 }
