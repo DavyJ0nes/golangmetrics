@@ -6,6 +6,9 @@ This library contains helpers for easily instrumenting your code.
 
 Currently it only supports [Prometheus](http://prometheus.io)
 
+It exposes a simple wrapper around the the [promhttp.Handler](https://godoc.org/github.com/prometheus/client_golang/prometheus/promhttp#Handler)
+as well as a selection of base metrics that follow the [RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
+
 ## Metric Types
 
 The library supports the 4 main metric types that enable you to expose data about your applications.
