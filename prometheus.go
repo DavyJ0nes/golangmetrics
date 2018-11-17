@@ -3,8 +3,11 @@ package golangmetrics
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // CoreMetrics contains the set of base metrics that should be added to each handler
@@ -78,4 +81,35 @@ func NewSummary(name, help string, labels []string) *prometheus.SummaryVec {
 		Name: name,
 		Help: help,
 	}, labels)
+}
+
+var (
+	requests = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "http_requests_total",
+		Help: "Rate of all HTTP requests per second",
+	}, []string{"method", "route", "status_code"})
+
+	duration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "request_duration_seconds",
+		Help:    "Time (in secods) spent serving HTTP requests",
+		Buckets: prometheus.DefBuckets,
+	}, []string{"method", "route", "status_code"})
+)
+
+// Measure is a middleware function for measuring the request latency and rate of the application
+func Measure(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// do not measure requests to /metrics
+		if r.URL.Path == "/metrics" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		m := httpsnoop.CaptureMetrics(next, w, r)
+
+		// measure request counts
+		requests.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Add(1)
+		// measure request duration
+		duration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
+	})
 }
